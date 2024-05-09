@@ -95,6 +95,7 @@ class G38Probe():
     def query_state(self, print_time):
         return self.endstop.query_endstop(print_time)
 
+    # TODO: Does this return toolhead position, gcode position ?
     def probe_to_gcode_position(self, gcmd, gcode_position=None, gcode_speed=None, stop_on=True, raise_error=True):
         # G38 should use gcode_move positions,
         # and as there's no documented way to go from GCode position to toolhead position taking into account everything like skew correction,
@@ -113,14 +114,16 @@ class G38Probe():
             else:
                 gcode_move.move_with_transform(gcode_position, gcode_speed)
 
-            toolhead_position = toolhead.commanded_pos
+            toolhead_position = list(toolhead.commanded_pos)
             last_move = intercept.get_last()
             if last_move is None:
-                toolhead_speed = math.sqrt(last_move.max_cruise_v2)
-            else:
                 toolhead_speed = gcode_speed
+            else:
+                toolhead_speed = math.sqrt(last_move.max_cruise_v2)
 
-        return self.probe_to_toolhead_position(gcmd, toolhead_position, toolhead_speed, stop_on, raise_error)
+        self.probe_to_toolhead_position(gcmd, toolhead_position, toolhead_speed, stop_on, raise_error)
+        # Above returns toolhead position, which should be updated, this function works with GCode positions, so just request that.
+        return gcode_move.position_with_transform()
 
     def probe_to_toolhead_position(self, gcmd, target_position, target_speed, stop_on, raise_error):
         gcmd.respond_info("Probing to (%f,%f,%f) at %fmm/sec" % (target_position[0], target_position[1], target_position[2], target_speed))
@@ -139,7 +142,10 @@ class G38Probe():
                     "Probing failed due to printer shutdown")
             raise
 
-        gcmd.respond_info("Final position (%f,%f,%f)" % (epos[0], epos[1], epos[2]))
+        # TODO: Check if new position is even on the line of start to finish,
+        # as a bug in kinematics.calc_position may screw us over...
+
+        gcmd.respond_info("Final probe (toolhead) position (%f,%f,%f)" % (epos[0], epos[1], epos[2]))
         return epos
 
 
