@@ -1,0 +1,11 @@
+
+[probe_g38]
+pin: ^PG15
+
+[find_probe]
+z_travel_speed: 10
+travel_speed: 20
+probe_speed: 2
+z_probe_speed: 2
+spread: 8
+
