@@ -1,0 +1,4 @@
+Kinematic position = Position according to steppers
+Toolhead position = Derived from kinematic position
+Transformed position = skew correction, bed mesh, etc
+gcode_move.last_position = Transformed position - gcode_move.base_position
